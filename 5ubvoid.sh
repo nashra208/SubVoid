@@ -39,7 +39,7 @@ function subdomain () {
   else
     
     # go to home directory 
-    cd $HOME
+    cd "$HOME"
     timestamp=$(date "+%Y-%m-%d_%H-%M-%S")
 
     # making directory using domain name and timestamp 
@@ -86,7 +86,7 @@ function help (){
   echo -e "Subvoid is the automatic tool which integrate multiple tools for subdomain enumeration using passive.\n"
   echo -e "Usage:\n./5ubvoid.sh [flags]\n"
   echo -e "Flags:\n\nINPUT:"
-  echo -e "-d, domains to find subdomains for         ./5ubvoid.sh -d <domain.com>  or ./5ubvoid.sh -domain <domain.com>"
+  echo -e "--s, domains to find subdomains for         ./5ubvoid.sh --s <domain.com>  or ./5ubvoid.sh --subdomain <domain.com>"
 }
 
 # taking user arguments 
@@ -109,7 +109,7 @@ function arguments() {
         if [[ "$current" == "--h" || "$current" == "--help" ]]; then
             help
             exit 0
-        elif [[ "$current" == "--s" || "$current" == "--subdomain"]]; then
+        elif [[ "$current" == "--s" || "$current" == "--subdomain" ]]; then
             next=$((i+1))
             domain="${!next}"
             if [[ -z "$domain" ]]; then
@@ -118,7 +118,7 @@ function arguments() {
                 exit 1
             fi
             subdomain "$domain"
-            discord
+            
             ((i++))  # skip the domain value
         else
             echo -e "${RED}Invalid arguments passed${NC}\n"
@@ -169,7 +169,7 @@ function discord() {
     # so splitting of file is needed to send file within word limit
 
     split -l 10 "$work_dir/finalsubs.txt" "$work_dir/flsbchunk_"
-    echo "\n${GREEN}Please be patient. Sending your results to Discord...${NC}\n"
+    echo -e "\n${GREEN}Please be patient. Sending your results to Discord...${NC}\n"
    
 
     counter=1
