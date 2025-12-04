@@ -8,6 +8,7 @@ NC='\033[0m'  # No Color
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 work_dir=""
 
+
 # shows the tool name 
 function banner {
 echo "                                          ";
@@ -86,49 +87,53 @@ function help (){
   echo -e "Subvoid is the automatic tool which integrate multiple tools for subdomain enumeration using passive.\n"
   echo -e "Usage:\n./5ubvoid.sh [flags]\n"
   echo -e "Flags:\n\nINPUT:"
-  echo -e "--s, domains to find subdomains for         ./5ubvoid.sh --s <domain.com>  or ./5ubvoid.sh --subdomain <domain.com>"
+  echo -e "--s or --subdomains, domains to find subdomains for        ./5ubvoid.sh --s <domain.com>  or ./5ubvoid.sh --subdomain <domain.com>"
+  echo -e "--d or --discord , sending results to your disord         ./5ubvoid.sh --s <domain.com> --d  or ./5ubvoid.sh --subdomain <domain.com> --discord"
+
 }
 
 # taking user arguments 
 function arguments() {
-    arg_count=$#
+    subdmn_mntnd=false
+    dscrd_usge=false
 
-    # if no arguments are passed
-    if [[ "$arg_count" -eq 0 ]]; then
+    if [[ $# -eq 0 ]]; then
         echo -e "${RED}No arguments passed${NC}\n"
         help
         exit 1
     fi
-  
-  # looping to execute the function according to argumnet passed
-  # exit invalid argument exists
-    i=1
-    while [[ "$i" -le "$arg_count" ]]; do
-        current="${!i}"
 
-        if [[ "$current" == "--h" || "$current" == "--help" ]]; then
-            help
-            exit 0
-        elif [[ "$current" == "--s" || "$current" == "--subdomain" ]]; then
-            next=$((i+1))
-            domain="${!next}"
-            if [[ -z "$domain" ]]; then
-                echo -e "${RED}No domain provided${NC}"
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --s|--subdomain)
+                if [[ -z "$2" ]]; then
+                    echo -e "${RED}Error: No domain provided${NC}"
+                    exit 1
+                fi
+                subdmn_mntnd=true
+                subdomain "$2"
+                shift 2
+                ;;
+            --d|--discord)
+                dscrd_usge=true
+                shift
+                ;;
+            --h|--help)
+                help
+                exit 0
+                ;;
+            *)
+                echo -e "${RED}Invalid argument: $1${NC}"
                 help
                 exit 1
-            fi
-            subdomain "$domain"
-            
-            ((i++))  # skip the domain value
-        else
-            echo -e "${RED}Invalid arguments passed${NC}\n"
-            help
-            exit 1
-        fi
-
-        ((i++))
+                ;;
+        esac
     done
+
+    # If Discord is requested after subdomain
+    [[ $dscrd_usge == true && $subdmn_mntnd == true ]] && discord
 }
+
 
 # graceful handling if user interrupts the script execution
 function cleanup(){
@@ -156,39 +161,54 @@ function check_up(){
     fi
   done
 }  
+
+
 # sending results to discord
 function discord() {
-  # durning subdomain function execution the results are saved at home directory
-  # as webhook file is in the folder where the the script is located
-  # the variable is used to reach back to the script diectory for discord webhook
+    webhook_file="$SCRIPT_DIR/webhook.txt"
 
-    webhook=$(grep 'webhook=' "$SCRIPT_DIR/webhook.txt" | cut -d'"' -f2)
+    # Check if webhook file exists and is not empty
+    if [[ ! -s "$webhook_file" ]]; then
+        echo "Please add your Discord webhook in $webhook_file"
+        exit 1
+    fi
 
-    # Split the main file into chunks of 10 lines
-    # discord has a word limit of 2000 characters 
-    # so splitting of file is needed to send file within word limit
+    # Read webhook URL safely (remove spaces + quotes)
+    webhook=$(sed 's/[" ]//g' "$webhook_file")
+
+    # Handle formats:
+    # webhook="https://..."
+    # webhook=https://...
+    # https://...
+    webhook="${webhook#webhook=}"
+
+    # Validate webhook is not empty
+    if [[ -z "$webhook" ]]; then
+        echo "Webhook is empty. Please fix $webhook_file"
+        exit 1
+    fi
 
     split -l 10 "$work_dir/finalsubs.txt" "$work_dir/flsbchunk_"
     echo -e "\n${GREEN}Please be patient. Sending your results to Discord...${NC}\n"
-   
 
     counter=1
     for file in "$work_dir"/flsbchunk_*; do
         message=$(<"$file")
-        message=$(echo "$message" | jq -Rs .)
+        json_message=$(jq -Rs . <<< "$message")
 
         curl -H "Content-Type: application/json" \
              -X POST \
-             -d "{\"content\": $message}" \
+             -d "{\"content\": $json_message}" \
              "$webhook"
 
         echo "Message $counter has been sent!"
-        sleep 1  # avoid rate limits
+        sleep 1
         ((counter++))
     done
 
     echo -e "\n${GREEN}All results sent. Check your Discord!!${NC}"
 }
+
 
 
 # checkup and cleanup function running before any function 
@@ -201,8 +221,6 @@ function main {
  
 banner
 arguments "$@"
-discord
-
 
 }
 
