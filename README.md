@@ -33,16 +33,20 @@ sudo apt install jq
 
 ## ▶️ Usage
 
+Show help menu:
+```bash
+./5ubvoid.sh --help  or ./5ubvoid.sh --h
+```
+
 Run Subvoid with a target domain:
 
 ```bash
-./5ubvoid.sh --s example.com
+./5ubvoid.sh --s example.com or ./5ubvoid.sh --subdomain example.com
 ```
 
-
-Show help menu:
+Run Subvoid with a target domain and get results in your discord:
 ```bash
-./5ubvoid.sh --help
+./5ubvoid.sh --s example.com --d  or ./5ubvoid.sh --subdomain example.com --discord
 ```
 
 
@@ -59,12 +63,16 @@ example.com_YYYY-MM-DD_HH-MM-SS/
 ```
 
 
-Files include:
-
+## 🗃️ Result Files :
+```bash
+┌──(user㉿user)-[~/example.com_2025-12-03_20-09-25]
+└─$ pwd
+/home/user/example.com_2025-12-03_20-09-25
 subfinder.txt
 assetfinder.txt
 unqsubs.txt
 finalsubs.txt
+```
 
 
 Results are automatically chunked and delivered to Discord.
