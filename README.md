@@ -48,6 +48,7 @@ Run Subvoid with a target domain and get results in your discord:
 ```bash
 ./5ubvoid.sh --s example.com --d  or ./5ubvoid.sh --subdomain example.com --discord
 ```
+<img width="975" height="400" alt="image" src="https://github.com/user-attachments/assets/3187e498-2eb0-4f7c-8dab-ab0508633c35" />
 
 
 ## Add your Discord webhook inside webhook.txt:
